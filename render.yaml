@@ -1,0 +1,53 @@
+services:
+  - type: web
+    name: indra
+    runtime: python
+    plan: free
+    region: singapore
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn -c gunicorn.conf.py app:app
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      - key: INDRA_ENGINE
+        value: "1"
+      - key: INDRA_LIGHTNING
+        value: "1"
+      - key: INDRA_RADAR_INTERVAL
+        value: "300"
+      - key: INDRA_SACHET_INTERVAL
+        value: "180"
+      - key: INDRA_SATELLITE_INTERVAL
+        value: "300"
+      - key: INDRA_MODEL_GRID_INTERVAL
+        value: "3600"
+      - key: INDRA_MODEL_GRID_DEG
+        value: "1.0"
+      - key: INDRA_RUNTIME_DIR
+        value: /tmp/indra-runtime
+      - key: INDRA_PRO_ACCESS_CODE
+        generateValue: true
+      - key: IMD_API_TOKEN
+        sync: false
+      - key: OPEN_METEO_API_KEY
+        sync: false
+      - key: INDRA_SMTP_HOST
+        sync: false
+      - key: INDRA_SMTP_USER
+        sync: false
+      - key: INDRA_SMTP_PASS
+        sync: false
+      - key: INDRA_SMTP_FROM
+        sync: false
+      - key: INDRA_ADMIN_EMAILS
+        sync: false
+      - key: INDRA_PUBLIC_URL
+        sync: false
+      - key: INDRA_SMTP_PORT
+        value: "587"
+      - key: INDRA_OWNER_EMAIL
+        sync: false
+      - key: INDRA_OWNER_PASSWORD
+        sync: false

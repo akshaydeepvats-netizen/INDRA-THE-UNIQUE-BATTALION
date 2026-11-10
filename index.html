@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>INDRA · Severe Weather Intelligence for India</title>
+<meta name="description" content="INDRA — real-time hyperlocal severe-weather monitoring and 0–6 h convective nowcasting for India.">
+<meta name="theme-color" content="#eaf1f6">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='%2300a3c4' stroke-width='2'/%3E%3Cpath d='M17 5 10 18h6l-2 9 8-14h-6z' fill='%2300a3c4'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Geist:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+<link rel="stylesheet" href="static/css/indra.css">
+<link rel="stylesheet" href="static/css/holo.css">
+</head>
+<body class="holo">
+<div id="boot" class="boot" aria-live="polite">
+  <div class="boot-core">
+    <div class="boot-ring"><svg viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="92" class="br1"/><circle cx="100" cy="100" r="74" class="br2"/><circle cx="100" cy="100" r="56" class="br3"/><path d="M106 52 80 106h24l-8 44 32-60h-24z" class="bolt"/></svg></div>
+    <div class="boot-title">INDRA</div>
+    <div class="boot-sub">Integrated Nowcasting &amp; Dynamic Risk Assessment · India</div>
+    <ol id="bootLog" class="boot-log mono"></ol>
+    <button id="bootSkip" class="btn ghost sm">Enter console</button>
+  </div>
+</div>
+
+<div id="gate" class="gate" hidden></div>
+
+<header class="topbar glass">
+  <button id="logo" class="logo" title="Return to your dashboard" aria-label="INDRA home">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="13" class="lg-ring"/><circle cx="16" cy="16" r="9" class="lg-ring2"/><path d="M17 5 10 18h6l-2 9 8-14h-6z" class="lg-bolt"/></svg>
+    <span class="logo-word">INDRA</span>
+  </button>
+  <div class="crumbs" id="crumbs"></div>
+  <div class="search-wrap">
+    <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input id="search" type="search" autocomplete="off" placeholder="Search state, district, city, town or village" aria-label="Search location">
+    <kbd class="kbd">Ctrl K</kbd>
+    <div id="searchResults" class="search-results glass" hidden></div>
+  </div>
+  <div class="top-right">
+    <div class="clocks mono"><span><b>IST</b> <i id="clkIst">--:--:--</i></span><span><b>UTC</b> <i id="clkUtc">--:--:--</i></span></div>
+    <div id="natChip" class="lvl-chip" data-level="UNKNOWN" title="National threat level"><span class="dot"></span><span class="lbl">NATIONAL</span><b id="natLevel">—</b></div>
+    <div id="liveChip" class="live-chip" title="Live link"><span class="pulse"></span><span id="liveTxt">LINKING</span></div>
+    <button id="btnVoice" class="icon-btn" title="Voice command (V)" aria-label="Voice command"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+    <button id="btnSound" class="icon-btn" title="Alarm sound" aria-label="Toggle alarm sound"><svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path class="on" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/><path class="off" d="m16 9 5 6m0-6-5 6"/></svg></button>
+    <button id="btnNotify" class="icon-btn" title="Browser notifications" aria-label="Toggle browser notifications"><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></button>
+    <div id="acct" class="acct" hidden></div>
+  </div>
+</header>
+
+<nav class="rail glass" id="rail" aria-label="Modules"></nav>
+
+<main class="stage">
+  <div id="map" class="map" aria-label="India map"></div>
+
+  <div class="hud-tl">
+    <div class="layer-box glass" id="layerBox">
+      <div class="hud-title"><span>LAYERS</span><button class="mini" id="layerToggle" aria-label="Collapse layers">–</button></div>
+      <div id="layerList" class="layer-list"></div>
+    </div>
+  </div>
+
+  <div class="hud-scope glass" id="scope" title="National scan — live cell blips">
+    <div class="scope-disc"><div class="sweep"></div><div class="scope-grid"></div><div id="blips"></div></div>
+    <div class="scope-meta mono"><span id="scopeCells">0</span> CELLS · <span id="scopeStrikes">0</span> STRIKES/15m</div>
+  </div>
+
+  <div class="hud-legend glass" id="legend"></div>
+
+  <div class="timebar glass" id="timebar" hidden>
+    <button class="icon-btn sm" id="tbPlay" aria-label="Play"><svg viewBox="0 0 24 24"><path class="play" d="M8 5v14l11-7z"/><path class="pause" d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg></button>
+    <div class="tb-body">
+      <div class="tb-head"><span id="tbTitle" class="tb-title">RADAR LOOP</span><span id="tbTime" class="mono">--</span><span id="tbBadge" class="badge">—</span></div>
+      <input type="range" id="tbRange" min="0" max="0" value="0" aria-label="Frame">
+      <div class="tb-ticks mono" id="tbTicks"></div>
+    </div>
+  </div>
+
+  <section class="panel glass" id="panel" aria-live="polite">
+    <div class="panel-grip" id="panelGrip"><span></span></div>
+    <div class="panel-head">
+      <div><div class="panel-kicker" id="panelKicker">COMMAND</div><h1 class="panel-title" id="panelTitle">Command Desk</h1></div>
+      <div class="panel-actions" id="panelActions"></div>
+    </div>
+    <div class="panel-body" id="panelBody"></div>
+  </section>
+
+  <div class="ticker glass" id="ticker"><span class="tk-label">LIVE LOG</span><div class="tk-track" id="tkTrack"></div></div>
+</main>
+
+<div id="toasts" class="toasts" aria-live="assertive"></div>
+<div id="modal" class="modal" hidden></div>
+<div id="palette" class="palette" hidden>
+  <div class="palette-box glass">
+    <input id="paletteInput" placeholder="Type a command or place… (e.g. radar, alerts, Meerut)" autocomplete="off">
+    <div id="paletteList" class="palette-list"></div>
+  </div>
+</div>
+<div id="voiceHud" class="voice-hud glass" hidden><div class="vh-wave"><i></i><i></i><i></i><i></i><i></i></div><div id="voiceText" class="mono">Listening…</div></div>
+
+<script>window.INDRA_API_BASE = window.INDRA_API_BASE || "";</script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script type="module" src="static/js/app.js"></script>
+</body>
+</html>
